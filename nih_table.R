@@ -86,8 +86,8 @@ myft <- ibd_table %>%
              male.Hispanic = "Hispanic or Latino",
              female.NotHispanic = "Not Hispanic or Latino",
              male.NotHispanic = "Not Hispanic or Latino",
-             female.Unknown = "Unknown/Not Reported Ethnicity",
-             male.Unknown = "Unknown/Not Reported Ethnicity",
+             female.Unknown = "Unknown/Not Reported",
+             male.Unknown = "Unknown/Not Reported",
              Total = "Total") %>% 
   add_header(`Racial Categories` = "Racial Categories",
              female.Hispanic = "Ethnic Categories",
@@ -105,10 +105,12 @@ myft <- ibd_table %>%
                     female.Unknown = "Female",
                     male.Unknown = "Male",
                     Total = "Total") %>% 
+  fontsize(size = 12) %>% 
+  fontsize(size=14, part="header") %>% 
   merge_h(part= "header") %>% 
   merge_v(part= "header") %>% 
   align(align = "center", part = "all") %>% 
-  autofit()
+  width(j = 1, width = 2.25)
 
 myft
   
@@ -123,3 +125,5 @@ ppt <- add_slide(ppt, layout = "Title and Content",
                  master = "Office Theme")
 ppt <- ph_with_flextable(ppt, value = myft, type= "body")
 print(ppt, target = "/Users/peterhiggins/Documents/Rcode/nih_enrollment_table/ppt_slide.pptx")
+
+sessionInfo()
