@@ -105,12 +105,13 @@ myft <- ibd_table %>%
                     female.Unknown = "Female",
                     male.Unknown = "Male",
                     Total = "Total") %>% 
+  font(fontname = "Arial") %>% 
   fontsize(size = 12) %>% 
   fontsize(size=14, part="header") %>% 
   merge_h(part= "header") %>% 
   merge_v(part= "header") %>% 
   align(align = "center", part = "all") %>% 
-  width(j = 1, width = 2.25)
+  width(j = 1, width = 2.0)
 
 myft
   
