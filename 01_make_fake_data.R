@@ -14,13 +14,13 @@ library(glue)
 # using assorted generators and lists of names
 record_id <- 1:500
 
-#from https://github.com/hadley/data-baby-names
+# firstnames from https://github.com/hadley/data-baby-names
 firstnames <- read_csv("data/baby-names-us.csv")
 firstnames %>%  filter(year == 2008) %>% pull(name) %>% 
   sample(size=500) ->
 first_name
 
-#from Census http://www2.census.gov/topics/genealogy/2010surnames/
+# lastnames from Census http://www2.census.gov/topics/genealogy/2010surnames/
 lastnames <- read_excel("data/us_surnames.xlsx")
 lastnames %>%  
     pull(name) %>% 
