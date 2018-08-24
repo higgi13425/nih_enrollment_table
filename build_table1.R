@@ -1,0 +1,7 @@
+library(arsenal)
+library(knitr)
+library(survival)
+library(tidyverse)
+data(mockstudy)
+dim(mockstudy)
+glimpse(mockstudy)
