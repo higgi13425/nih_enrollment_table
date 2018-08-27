@@ -1,14 +1,8 @@
 library(magrittr)
 library(tidyverse)
-library(keyring)
-library(charlatan)
-library(fs)
 library(readxl)
 library(writexl)
-library(REDCapR)
-library(redcapAPI)
-library(RCurl)
-library(glue)
+
 
 # generate data for fake database in training REDCap
 # using assorted generators and lists of names

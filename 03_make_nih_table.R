@@ -10,19 +10,20 @@ library(officer)
 
 # read and clean data ---------------------------------------------------------------
 
-ibd <- read_csv("IBDDatabank2015_DATA_2018-06-29_0901.csv")
+#ibd <- read_csv("IBDDatabank2015_DATA_2018-06-29_0901.csv")
+ibd <- read_csv("data/fake.csv")
 
 ibd %>% 
-  filter(redcap_event_name == "baseline_visit_arm_1") %>% 
-  select(sex, race___0:ethnicity) %>% 
+  #filter(redcap_event_name == "baseline_visit_arm_1") %>% 
+  select(sex, race:ethnicity) %>% 
   mutate(race  =  case_when(
-             .$race___0 == 1 ~ "White",
-             .$race___1 == 1 ~ "Black or African-American",
-             .$race___2 == 1 ~ "Asian",
-             .$race___3 == 1 ~ "Native Hawaiian or Other Pacific Islander",
-             .$race___4 == 1 ~ "American Indian or Alaska Native",
-             .$race___5 == 1 ~ "More Than One Race",
-             .$race___999 == 1 ~ "Unknown or Not Reported",
+             .$race == 4 ~ "White",
+             .$race == 2 ~ "Black or African-American",
+             .$race == 5 ~ "Asian",
+             .$race == 0 ~ "Native Hawaiian or Other Pacific Islander",
+             .$race == 2 ~ "American Indian or Alaska Native",
+             .$race == 1 ~ "More Than One Race",
+             .$race == 6 ~ "Unknown or Not Reported",
              TRUE ~ "Unknown or Not Reported")) %>% 
   select(sex, race, ethnicity) %>% 
   mutate(ethnic_cat = case_when(
@@ -55,13 +56,13 @@ ibd_table <- ibd %>%
          'Male.Hispanic' = Male.x)
 
 
-# filter to only non-zero categories ---------------------
+# gather and filter to only non-zero categories ---------------------
 
 
 ibd_table2 <- gather(ibd_table, key= sex.eth, value = count, -race) %>% 
   separate(sex.eth, into = c('sex', 'ethnicity')) %>% 
   filter(count != 0)
-#results in 17 rows
+#results in 20 rows
 
 #  create empty table -----------------------------------------------------
 
@@ -127,7 +128,7 @@ ibd_table <- rownames_to_column(as.data.frame(ibd_table2), "Racial Categories")
 
 #arrange without total
 ibd_table3 <- ibd_table[1:7,] %>% arrange(`Racial Categories`)
-
+# add back total
 ibd_table <- as.data.frame(rbind(ibd_table3, ibd_table[8,]))
 
 # and write to excel

@@ -1,87 +1,8 @@
 library(magrittr)
 library(tidyverse)
 library(keyring)
-library(charlatan)
-library(fs)
-library(readxl)
-library(writexl)
 library(REDCapR)
-library(redcapAPI)
-library(RCurl)
-library(glue)
 
-# generate data for fake database in training REDCap
-# using the charlatan package and list of names
-record_id <- 1:500
-
-#from https://github.com/hadley/data-baby-names
-firstnames <- read_csv("data/baby-names-us.csv")
-firstnames %>%  filter(year == 2008) %>% pull(name) %>% 
-  sample(size=500) ->
-first_name
-
-#from Census http://www2.census.gov/topics/genealogy/2010surnames/
-lastnames <- read_excel("data/us_surnames.xlsx")
-lastnames %>%  
-    pull(name) %>% 
-    sample(size=500) %>% 
-    tolower() %>% 
-    tools::toTitleCase(.) ->
-last_name
-
-#street names from 
-# https://catalog.data.gov/dataset/street-names-37fec/resource/d655cc82-c98f-450a-b9bb-63521c870503
-street_names <- read_csv("data/Street_Names.csv") %>% 
-  filter(FullStreetName > "A ST") %>% 
-  select(FullStreetName) %>% 
-  pull(FullStreetName) %>% 
-  tolower() %>% 
-  tools::toTitleCase(.) 
-
-address <- paste0(round(runif(500)*98 +1)," ",
-                  sample(street_names, size =500))
-
-telephone <- for(i in 1:500){
-  phone[i] <- collapse(sample(2:9,10, replace = TRUE))
-  }
-# note still leaves in a few non-public area codes like
-# 555, 950, 958, 959, 976
-
-year <- round(runif(500)*70 + 1930)
-month <- round(runif(500)*11 +1)
-day <- round(runif(500)*27 +1)
-dob <- as.Date(paste0(year,"-", month, "-", day))
-
-#age <- round(as.numeric(Sys.Date() - (dob))/365)
-
-ethnicity <-runif(500) 
-ethnicity <- case_when(ethnicity < 0.05 ~ 0, 
-                ethnicity < 0.98 ~ 1,
-                TRUE ~ 2)
-
-race <-runif(500) 
-race <- case_when(race<0.04 ~ 1, 
-                  race<0.15 ~ 3,
-                  race<0.85 ~ 4,
-                  race<0.98 ~ 5,
-                  TRUE ~ 6)
-sex <-runif(500) 
-sex <- case_when(sex < 0.53 ~ 0, 
-                  TRUE ~ 1)
-
-height <- rnorm(500, mean= 173, sd =10) %>% round(1)
- 
-weight <- rnorm(500, mean= 112, sd =25) %>%
-          as.integer()
-
-fake_data <- tibble(record_id, first_name, last_name, address,
-        telephone,  dob,  ethnicity, race,
-        sex, height, weight)
-#fake_data$bmi <- round(fake_data$weight*10000/
-#                    (fake_data$height^2), 1)
-fake_data$email <- paste0(tolower(fake_data$first_name),".",
-                tolower(fake_data$last_name), "@aol.com")
-write_csv(fake_data,"data/fake.csv")
 
 # SET UP TOKEN in ADVANCE
 # Note: to set up hidden token in keyring
@@ -100,15 +21,22 @@ write_csv(fake_data,"data/fake.csv")
 
 # example for testing that works from Oklahoma
 # uses REDCapR - this works fast
+# only 5 records
 ok_url   <- "https://bbmc.ouhsc.edu/redcap/api/"
 ok_token <- "9A81268476645C4E5F03428B8AC3AA7B"
 ok_df <- redcap_read(redcap_uri=ok_url, 
                      token=ok_token)$data
 
-#test with training dbase of fake data
-# connects, reads something, but get HTML in one column
-# works if connected via Ethernet
-# works with WiFi and VPN - faster
+# fake clinical data hosted at Oklahoma by William H. Beasley
+
+fake_df <- REDCapR::redcap_read_oneshot(
+  redcap_uri = "https://bbmc.ouhsc.edu/redcap/api/",  
+  token      = "F304DEC3793FECC3B6DEEFF66302CAD3"
+)$data
+
+# test with training dbase of fake data at UMichigan
+# only works if connected via Ethernet or 
+# on WiFi if already connected via VPN 
 train_url <- 'https://redcap-t-a.umms.med.umich.edu/api/'
 train_token <- "1C4CCB1234A55E711EDF57B0D8E24F01"
 train_df <- redcap_read(redcap_uri=train_url, 
@@ -116,6 +44,7 @@ train_df <- redcap_read(redcap_uri=train_url,
 
 # REDCapR using umich prod data - 
 # works with Ethernet connection
+# or WiFi after VPN connection
 # uses REDCapR
 prod_url <- 'https://redcap-p-a.umms.med.umich.edu/api/'
 prod_token <- keyring::key_get(
@@ -123,6 +52,10 @@ prod_token <- keyring::key_get(
   username = "REDCap IBD Database API Token")
 prod_df <- redcap_read(redcap_uri = prod_url, 
                        token = prod_token)$data
+
+
+# Assorted other approaches -----------------------------------------------
+
 
 # test httr with Oklahoma API
 main_post <- httr::POST(
@@ -194,7 +127,10 @@ baseline_df %<>% select(sex:ethnicity) %>%
 
 
 # prepare to export from production
-# fails
+# redcapAPI approach
+# needs VPN for WiFi
+# or ethernet on campus for UMichigan
+library(redcapAPI)
 prod_url <- 'https://redcap-p-a.umms.med.umich.edu/api/'
 prod_token <- keyring::key_get(
   service = "REDCap IBD Database API Token", 
@@ -208,7 +144,9 @@ mydata <- exportRecords(rcon=prod_rcon,
 # export fake data from training db
 # set up for training database
 # with redcapAPI
-# hangs, very slow
+# needs VPN for WiFi
+# or on campus ethernet connection at UMichigan
+library(redcapAPI)
 train_url <- 'https://redcap-t-a.umms.med.umich.edu/api/'
 train_token <- "1C4CCB1234A55E711EDF57B0D8E24F01"
 train_rcon <- redcapConnection(train_url, train_token)
@@ -219,7 +157,9 @@ records <- exportRecords(rcon=train_rcon,
 
 
 # from OK - this version works
-# but pretty slow
+# with redcapapi
+# but pretty slow compared to REDCapR
+library(redcapAPI)
 ok_url   <- "https://bbmc.ouhsc.edu/redcap/api/"
 ok_token <- "9A81268476645C4E5F03428B8AC3AA7B"
 ok_rcon <- redcapConnection(ok_url, ok_token)
@@ -231,7 +171,8 @@ records <- exportRecords(rcon=ok_rcon,
 # test redcapAPI with Oklahoma setup on production data
 # this version fails with Wifi,
 # works with Ethernet
-# slow
+
+library(redcapAPI)
 prod_url <- 'https://redcap-p-a.umms.med.umich.edu/api/'
 prod_token <- keyring::key_get(
   service = "REDCap IBD Database API Token", 
@@ -244,7 +185,7 @@ prod_data <- exportRecords(rcon=prod_rcon,
 
 # test redcapAPI with Oklahoma setup on training data
 # works with VPN vpn.med.umich.edu
-# set up with Cisco and wifi - but slow
+# set up with VPN and wifi - but slow
 # works with Ethernet
 library(redcapAPI)
 train_data <- exportRecords(rcon=train_rcon, 
